@@ -3,21 +3,25 @@ package models.repo
 import anorm.SqlParser._
 import models.song._
 import anorm._
+import play.api.libs.json._
 
 import scala.concurrent.Future
 
 object SongRepo {
 
-  val simple: RowParser[Song] =
+  val simple =
     long("id") ~
       str("name") ~
-      str("artist") map {
-      case id ~ name ~ artist => Song(Some(id), name, artist)
+      str("artist") ~
+      str("sections") map {
+      case id ~ name ~ artist ~ sections => {
+        val x = Json.fromJson[Seq[Section]](Json.parse(sections)).getOrElse(Seq.empty)
+        Song(Some(id), name, artist, x)
+      }
     }
 
   def list(): Future[Seq[Song]] = Future {
-    DB.withConnection{implicit connection =>
-
+    DB.withConnection { implicit connection =>
       SQL("""SELECT * from song""").as(simple *)
     }
   }
@@ -28,7 +32,8 @@ object SongRepo {
         |SELECT
         | id,
         | name,
-        | artist
+        | artist,
+        | sections
         |FROM song
         |WHERE id = {id}
       """.stripMargin)
@@ -38,22 +43,28 @@ object SongRepo {
   }
 
   def create(song: Song) = Future {
-    DB.withConnection{ implicit  connection =>
 
-      SQL(
-        """
+    val sections_str: String = Json.stringify(Json.toJson(song.sections))
+
+    DB.withConnection { implicit connection =>
+      SQL("""
           |INSERT INTO song (
           |  name,
-          |  artist
+          |  artist,
+          |  sections
           |)
           |VALUES(
           |  {name},
-          |  {artist}
+          |  {artist},
+          |  {sections}
           |)
-        """.stripMargin).on(
-        'name -> song.name,
-        'artist -> song.artist
-      ).executeInsert()
+        """.stripMargin)
+        .on(
+          'name -> song.name,
+          'artist -> song.artist,
+          'sections -> sections_str
+        )
+        .executeInsert()
     }
   }
 
