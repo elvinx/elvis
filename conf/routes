@@ -1,0 +1,8 @@
+
+GET     /                                     controllers.Songs.list
+
+GET     /songs/:id                            controllers.Songs.get(id:Int)
+GET     /songs                                controllers.Songs.list
+POST    /songs                                controllers.Songs.post
+
+GET     /*file                                controllers.Assets.at(path="/public", file)
