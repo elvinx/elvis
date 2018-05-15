@@ -1,12 +1,8 @@
 
 # --- !Ups
 
-CREATE TABLE widget (
-  id        INTEGER      NOT NULL PRIMARY KEY AUTOINCREMENT,
-  name      VARCHAR(255) NOT NULL,
-  created   DATETIME     NOT NULL
-);
+CREATE TABLE "song" ( `id` INTEGER PRIMARY KEY AUTOINCREMENT, `artist` TEXT, `name` TEXT, `sections` TEXT )
 
 # --- !Downs
 
-DROP TABLE widget;
+DROP TABLE song;
