@@ -1,24 +1,24 @@
 package models.repo
 
+import javax.inject.Inject
+
 import anorm.SqlParser._
 import models.song._
 import anorm._
+import play.api.db.DBApi
 import play.api.libs.json._
 
 import scala.concurrent.Future
 
-object SongRepo {
+class SongRepo @Inject()(dbapi: DBApi) {
 
-  val simple =
-    long("id") ~
-      str("name") ~
-      str("artist") ~
-      str("sections") map {
-      case id ~ name ~ artist ~ sections => {
-        val x = Json.fromJson[Seq[Section]](Json.parse(sections)).getOrElse(Seq.empty)
-        Song(Some(id), name, artist, x)
-      }
-    }
+  private val DB = dbapi.database("default")
+
+  val simple = long("id") ~ str("name") ~ str("artist") ~ str("sections") map { case id ~ name ~ artist ~ sections => {
+    val x = Json.fromJson[Seq[Section]](Json.parse(sections)).getOrElse(Seq.empty)
+    Song(Some(id), name, artist, x)
+  }
+  }
 
   def list(): Future[Seq[Song]] = Future {
     DB.withConnection { implicit connection =>
@@ -28,26 +28,25 @@ object SongRepo {
 
   def getById(id: Long) = Future {
     DB.withConnection { implicit connection =>
-      SQL("""
-        |SELECT
-        | id,
-        | name,
-        | artist,
-        | sections
-        |FROM song
-        |WHERE id = {id}
-      """.stripMargin)
-        .on('id -> id)
-        .as(simple.singleOpt)
+      SQL(
+        """
+          |SELECT
+          | id,
+          | name,
+          | artist,
+          | sections
+          |FROM song
+          |WHERE id = {id}
+        """.stripMargin).on('id -> id).as(simple.singleOpt)
     }
   }
 
   def create(song: Song) = Future {
-
     val sections_str: String = Json.stringify(Json.toJson(song.sections))
 
     DB.withConnection { implicit connection =>
-      SQL("""
+      SQL(
+        """
           |INSERT INTO song (
           |  name,
           |  artist,
@@ -58,13 +57,7 @@ object SongRepo {
           |  {artist},
           |  {sections}
           |)
-        """.stripMargin)
-        .on(
-          'name -> song.name,
-          'artist -> song.artist,
-          'sections -> sections_str
-        )
-        .executeInsert()
+        """.stripMargin).on('name -> song.name, 'artist -> song.artist, 'sections -> sections_str).executeInsert()
     }
   }
 

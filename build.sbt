@@ -2,14 +2,21 @@ name := "elvis"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.12.4"
+
+crossScalaVersions in ThisBuild := Seq("2.11.11", "2.12.4")
+
+lazy val root =
+  (project in file(".")).enablePlugins(PlayScala)
 
 libraryDependencies ++= Seq(
+  guice,
   jdbc,
-  anorm,
-  "joda-time" % "joda-time" % "2.3",
-  "org.xerial" % "sqlite-jdbc" % "3.7.15-M1"
+  "org.xerial" % "sqlite-jdbc" % "3.21.0",
+  "net.ruippeixotog" %% "scala-scraper" % "2.1.0"
 )
+
+libraryDependencies += "org.playframework.anorm" %% "anorm" % "2.6.1"
 
 scalacOptions ++= Seq(
   "-encoding",
@@ -20,5 +27,3 @@ scalacOptions ++= Seq(
   "-language:postfixOps",
   "-language:implicitConversions"
 )
-
-play.Project.playScalaSettings
